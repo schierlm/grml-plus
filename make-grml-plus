@@ -1,0 +1,152 @@
+#!/bin/bash
+
+echo "grml-plus installation script"
+echo "(c) 2013 Michael Schierl"
+echo "Licensed under GPLv2 or later"
+echo "============================="
+
+set -e
+
+if [ -z "$1" ]; then
+	echo "Usage: ./make-grml-plus [device]"
+	exit -1
+fi
+
+DEVICE=$1
+MBR=`echo $1 | sed 's/[0-9]//g'`
+
+if [ ! -b $DEVICE -o ! -b $MBR ]; then
+	echo "Error: Either $DEVICE or $MBR is not a valid block device."
+	exit -1
+fi
+
+if [ ! "`grub-probe -d $DEVICE -t fs`" == "fat" ]; then
+	echo "Error: $DEVICE is not formatted with the fat filesystem."
+fi
+
+if [ ! "`grub-probe -d $DEVICE -t partmap`" == "msdos" ]; then
+	echo "Error: $MBR does not contain a MBR style partition table."
+fi
+
+echo "Mounting $DEVICE to /tmp/grml-plus/mnt."
+mkdir -p /tmp/grml-plus/mnt 
+umount /tmp/grml-plus/mnt 2>/dev/null || true
+mount $DEVICE /tmp/grml-plus/mnt
+echo "DEVICE=$DEVICE" >/tmp/grml-plus/devicename
+
+cd `dirname $0`/data
+DATADIR=`pwd`
+cd /tmp/grml-plus/mnt
+
+mkdir -p grml-plus/grub
+
+if [ -f grml-plus/grub/loopback.mod ]; then
+	echo "loopback.mod found; assuming that Grub2 is already installed."
+	echo "Remove that file to re-install Grub2 in MBR."
+else
+	echo "Installing Grub2 in MBR."
+	grub-mkdevicemap -m ../origdevice.map
+	grep "^`grub-probe -t drive -m ../origdevice.map -d $MBR`	" \
+		../origdevice.map | sed 's/^([^()]*)	/(hd0)	/' \
+		>../device.map
+	echo "Device map used for GRUB2:"
+	cat ../device.map
+	GRUBDEV=`grub-probe -t drive -m ../device.map -d $DEVICE`
+	echo "GRUB device used: $GRUBDEV"
+	grub-mkimage -d /usr/lib/grub/i386-pc -O i386-pc -o ../core.img \
+		-p ${GRUBDEV}/grml-plus/grub biosdisk fat part_msdos
+	grub-setup -d . -m ../device.map -c ../core.img \
+		-b ../../../usr/lib/grub/i386-pc/boot.img $MBR
+	echo "Patching GRUB2 MBR for enhanced compatibility."
+	perl $DATADIR/patch-grub-mbr.pl $MBR
+	echo "GRUB2 installation to MBR finished."
+	cp /usr/lib/grub/i386-pc/{bitmap,bitmap_scale,boot,bufio,crypto,extcmd,font,fshelp,gfxterm,iso9660,loopback,normal,terminal,video,test}.mod grml-plus/grub
+fi
+
+if [ ! -f grml-plus/kon-boot.img.gz ]; then
+	echo "Adding Kon-Boot (if you have a commercial version, feel free to replace the free version)."
+	wget -P .. -nc 'https://www.dropbox.com/s/f5i4g9vlmwoxrtp/kon-boot1.1-free.zip?dl=1'
+	mkdir ../konboot
+	unzip -P kon-boot '../kon-boot1.1-free.zip?dl=1' -d ../konboot
+	unzip ../konboot/kon-boot1.1-free/FD0-konboot-v1.1-2in1.zip \
+		-d ../konboot
+	gzip -c ../konboot/FD0-konboot-v1.1-2in1/FD0-konboot-v1.1-2in1.img \
+		>grml-plus/kon-boot.img.gz
+	rm -R ../konboot
+fi
+			
+if [ ! -f grml-plus/allinone.img ]; then
+	echo "Adding patched All-In-One Boot Floppy image."
+	cp /lib/live/mount/medium/boot/addons/allinone.img ../allinone.img
+	mkdir -p ../allinone
+	mount ../allinone.img ../allinone -t msdos -o loop
+	rm ../allinone/tools/lucifer.exe
+	mkdir -p ../patchbase
+	cp ../allinone/boot/grub/{intro.tct,taiobf.lst} ../patchbase
+	patch -d ../patchbase -p3 <$DATADIR/allinone.patch
+	
+	cp ../patchbase/{intro.tct,taiobf.lst} ../allinone/boot/grub
+	cp /lib/live/mount/medium/boot/addons/memdisk ../allinone/boot/memdisk
+	cp grml-plus/kon-boot.img.gz ../allinone/boot/kon-boot.imz
+	wget -P .. -nc http://download.plop.at/files/bootmngr/plpbt-5.0.14.zip
+	unzip ../plpbt-5.0.14.zip -d ../plpbt
+	cp ../plpbt/plpbt-5.0.14/plpbt.bin ../allinone/boot/plpbt.bin
+	rm -R ../plpbt
+	mkdir -p ../allinone/boot/grub2/kbd
+	mkdir -p ../kbds
+	tar xCJf ../kbds $DATADIR/kbds.tar.xz
+	cp ../kbds/kbds/*.gkb ../allinone/boot/grub2/kbd
+	umount ../allinone
+	cp ../allinone.img grml-plus/allinone.img
+fi
+
+if [ ! -f grml-plus/rawwritewin.exe ]; then
+	echo "Adding RawWriteWin.exe."
+	wget -P .. -nc http://www.chrysocome.net/downloads/rawwritewin-0.7.zip
+	unzip ../rawwritewin-0.7.zip -d ../rawwrite
+	cp ../rawwrite/rawwritewin.exe grml-plus/rawwritewin.exe
+	rm -R ../rawwrite
+fi
+
+if [ ! -f grml-plus/hdt.img ]; then
+	echo "Adding HDT."
+	wget -P .. -nc http://www.hdt-project.org/raw-attachment/wiki/hdt-0.5.0/hdt-0.5.2.img
+	cp ../hdt-0.5.2.img grml-plus/hdt.img
+fi
+
+if [ ! -f grml-plus/grub/memtest86.bin ]; then
+	echo "Adding Memtest86."
+	wget -P .. -nc http://memtest86.com/downloads/memtest86-iso.zip
+	mkdir -p ../memtest86/mnt
+	unzip ../memtest86-iso.zip -d ../memtest86
+	mount ../memtest86/Memtest86-*.iso ../memtest86/mnt -o ro,loop
+	cp ../memtest86/mnt/isolinux/memtest grml-plus/grub/memtest86.bin
+	umount ../memtest86/mnt
+	rm -R ../memtest86
+fi
+
+if [ ! -f grml-plus/grub/memtest86plus.bin ]; then
+	echo "Adding Memtest86+."
+	wget -P .. -nc 'http://memtest.org/download/5.01/memtest86+-5.01.zip'
+	mkdir ../memtest86plus
+	unzip ../memtest86+-*.zip -d ../memtest86plus
+	cp ../memtest86plus/*.bin grml-plus/grub/memtest86plus.bin
+	rm -R ../memtest86plus
+fi
+
+echo "Updating .cfg files."
+GRML_ISO=
+for i in grml-plus/grml*.iso; do GRML_ISO=`basename $i`; done
+if [ -z "$GRML_ISO" ]; then
+	echo "*** WARNING: grml-plus/grml*.iso not found. Your device ***"
+	echo "*** will probably not be bootable! ***"
+else
+	sed "s/%GRML_ISO%/${GRML_ISO}/g" <$DATADIR/grub.cfg \
+		>grml-plus/grub/grub.cfg
+fi
+cp $DATADIR/{grml,extras}.cfg grml-plus/grub
+
+echo "Cleaning up."
+cd $DATADIR/..
+umount /tmp/grml-plus/mnt
+echo "Done. Enjoy your new grml-plus USB drive or add some extras!"

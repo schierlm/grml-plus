@@ -1,0 +1,38 @@
+diff -Naur a/boot/grub/intro.tct b/boot/grub/intro.tct
+--- a/boot/grub/intro.tct	2013-10-20 17:12:17.509341484 +0000
++++ b/boot/grub/intro.tct	2013-10-20 17:18:34.181341274 +0000
+@@ -2,7 +2,7 @@
+ 	 	здддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддд	©
+ 	 	Ё                                                                            	Ё
+ 	 	Ё  здддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддд	©  Ё
+-	 	Ё  Ё                	Welcome To The All In One Boot Floppy 1.0             	Ё  Ё
++	 	Ё  Ё                	Welcome To The All In One Boot Floppy 1.0 	Plus	        	Ё  Ё
+ 	 	Ё  ю	дддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды  Ё
+ 	 	Ё                                                                            	Ё
+ 	 	Ё  зддддддддддддддддддддддддддддддддддддд	©   	здддддддддддддддддддддддддддд	©  Ё
+@@ -20,7 +20,7 @@
+ 	 	Ё  здддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддд	©  Ё
+ 	 	Ё  Ё               	"The Only Floppy Disk You Ever Need."                  	Ё  Ё
+ 	 	Ё  ю	дддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды  Ё
+-	 	Ё                                                                            	Ё
++	 	Ё    	(Patched to include Kon-Boot and Plop Boot Manager)	                     	Ё
+ 	 	ю	дддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды
+ 	                                 Press any key.	"
+ 
+diff -Naur a/boot/grub/taiobf.lst b/boot/grub/taiobf.lst
+--- a/boot/grub/taiobf.lst	2013-10-20 17:12:17.509341484 +0000
++++ b/boot/grub/taiobf.lst	2013-10-20 17:20:42.953341202 +0000
+@@ -13,6 +13,13 @@
+ title Load Smart Boot Manager (can boot from CD drives)
+ kernel /boot/sbootmgr.lkr
+ 
++title Load Kon-Boot (can bypass Windows passwords)
++kernel /boot/memdisk
++initrd /boot/kon-boot.imz
++
++title Load PLOP Boot Manager (can boot from USB)
++kernel /boot/plpbt.bin
++
+ title Load FreeDOS (+ lots of tools)
+ chainloader /boot/bootsect.or
+ 

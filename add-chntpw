@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+if [ ! -f grml-plus/chntpw.iso ]; then
+	echo "Adding chntpw."
+	wget -P .. -nc http://pogostick.net/~pnh/ntpasswd/cd110511.zip
+	unzip ../cd110511.zip -d ../chntpw
+	cp ../chntpw/cd110511.iso grml-plus/chntpw.iso
+fi
+
+if [ ! -f grml-plus/grub/chntpw.cgz ]; then
+	echo "Adding single initramfs for chntpw."
+	mkdir -p ../chntpw-mnt
+	mount grml-plus/chntpw.iso ../chntpw-mnt -o ro,loop
+	(gunzip -c ../chntpw-mnt/initrd.cgz; \
+		gunzip -c ../chntpw-mnt/scsi.cgz) | gzip \
+		>grml-plus/grub/chntpw.cgz
+	umount ../chntpw-mnt
+fi
+cat $DATADIR/chntpw.cfg >>grml-plus/grub/extras.cfg
+
+extra_cleanup

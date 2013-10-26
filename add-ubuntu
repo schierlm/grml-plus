@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+UBUNTU_FOUND=
+mkdir -p ../ubumnt
+
+for iso in grml-plus/ubuntu-*.iso; do
+	UBUNTU_FOUND=$iso
+	mount $iso ../ubumnt -o ro,loop
+	UBUNAME=`cat ../ubumnt/.disk/info`
+	UBUNAME_QUOTED=`echo $UBUNAME | sed 's/"/\\\"/g'`
+	ISOFILE=`basename $iso`
+	umount ../ubumnt
+	echo "Adding $UBUNAME..."
+	cat <<EOF >>grml-plus/grub/extras.cfg
+
+menuentry "$UBUNAME_QUOTED" {
+	iso_path="/$iso"
+	export iso_path
+	loopback ubu \$images/$ISOFILE
+	set root=(ubu)
+	configfile (ubu)/boot/grub/loopback.cfg
+	loopback -d ubu
+	terminal_output console
+}
+
+EOF
+done
+
+if [ -z "$UBUNTU_FOUND" ]; then
+	echo "grml-plus/ubuntu-*.iso not found."
+fi
+
+extra_cleanup
