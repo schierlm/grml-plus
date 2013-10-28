@@ -1,0 +1,51 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+mkdir -p efi/boot
+
+if [ ! -f efi/boot/bootx64.efi ]; then
+	echo "Error: Please run ./add-uefi-support first!"
+	extra_cleanup
+	exit -1
+fi
+
+if [ "`dpkg --print-architecture`" != "amd64" ]; then
+	echo "Error: sbsigntools are only available for grml64!"
+	extra_cleanup
+	exit -1
+fi
+
+if [ -f efi/boot/grml-plus-ca.crt -a ! -f efi/boot/grubx64.efi \
+	-a ! -f ../certs/GrmlPlus.key ]; then
+	# oops, we have a certificate, but no signed grub, and no signing key;
+	# let's delete and re-generate the certificate
+	rm efi/boot/GrmlPlus.crt
+fi
+
+if [ ! -f efi/boot/GrmlPlus.crt ]; then
+	wget -P .. -nc https://raw.github.com/vathpela/pesign/master/src/certs/make-certs
+	mkdir -p ../certs
+	pushd ../certs
+	bash ../make-certs GrmlPlus grml-plus \
+		all codesign 1.3.6.1.4.1.311.10.3.1
+	popd
+	cp ../certs/ca.crt efi/boot/grml-plus-ca.crt
+fi
+
+if [ ! -f efi/boot/grubx64.efi ]; then
+	wget -P .. -nc http://download.opensuse.org/repositories/home:/jejb1:/UEFI/Debian_7.0/amd64/sbsigntools_0.6-2_amd64.deb
+	dpkg -i ../sbsigntools_0.6-2_amd64.deb
+	sbsign --key ../certs/GrmlPlus.key --cert ../certs/GrmlPlus.crt \
+		--output efi/boot/grubx64.efi efi/boot/bootx64.efi
+fi
+
+if [ ! -f efi/boot/MokManager.efi ]; then
+	wget -P .. -nc http://www.codon.org.uk/~mjg59/shim-signed/shim-signed-0.2.tgz
+	tar Cxfvz .. ../shim-signed-0.2.tgz
+	cp ../shim-signed/MokManager.efi efi/boot
+	cp ../shim-signed/shim.efi efi/boot/bootx64.efi
+	rm -R ../shim-signed
+fi
+
+extra_cleanup

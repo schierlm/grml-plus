@@ -22,10 +22,12 @@ fi
 
 if [ ! "`grub-probe -d $DEVICE -t fs`" == "fat" ]; then
 	echo "Error: $DEVICE is not formatted with the fat filesystem."
+	exit -1
 fi
 
 if [ ! "`grub-probe -d $DEVICE -t partmap`" == "msdos" ]; then
 	echo "Error: $MBR does not contain a MBR style partition table."
+	exit -1
 fi
 
 echo "Mounting $DEVICE to /tmp/grml-plus/mnt."

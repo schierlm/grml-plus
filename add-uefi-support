@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+mkdir -p efi/boot
+
+if [ ! -f efi/boot/bootx64.efi ]; then
+	UUID=`grub-probe -d $DEVICE -t fs_uuid`
+	echo "search.fs_uuid $UUID root" >../load.cfg
+	echo 'loopback efimods ($root)/efi/boot/grub-modules.tar' >>../load.cfg
+	echo "set prefix=(efimods)/mods" >>../load.cfg
+	mkdir ../mods
+	cp /usr/lib/grub/x86_64-efi/*.mod ../mods
+	cp /usr/lib/grub/x86_64-efi/*.lst ../mods
+	echo 'set EFI=1' >../mods/grub.cfg
+	echo 'export EFI' >>../mods/grub.cfg
+	echo 'configfile ($root)/grml-plus/grub/grub.cfg' >>../mods/grub.cfg
+	tar Ccf .. efi/boot/grub-modules.tar mods
+	rm -r ../mods
+	grub-mkimage -c ../load.cfg -d /usr/lib/grub/x86_64-efi -O x86_64-efi \
+		--output=efi/boot/bootx64.efi --prefix=/ \
+		fat tar part_msdos loopback search_fs_uuid
+fi
+
+if [ ! -f efi/boot/efi-shell.efi ]; then
+	wget -P .. -nc 'http://sourceforge.net/p/edk2/code/14385/tree/branches/UDK2010.SR1/EdkShellBinPkg/FullShell/X64/Shell_Full.efi?format=raw'
+	cp '../Shell_Full.efi?format=raw' efi/boot/efi-shell.efi
+fi
+
+if [ ! -f efi/boot/uefi-shell.efi ]; then
+	wget -P .. -nc 'http://sourceforge.net/p/edk2/code/14385/tree/branches/UDK2010.SR1/ShellBinPkg/UefiShell/X64/Shell.efi?format=raw'
+	cp '../Shell.efi?format=raw' efi/boot/uefi-shell.efi
+fi
+
+if [ ! -f efi/boot/memtest.efi ]; then
+	# note that the normal BIOS memtest ISO has the same name;
+	# therefore download into a subdirectory
+	mkdir -p ../efimemtest-zip
+	wget -P ../efimemtest-zip -nc \
+		http://www.memtest86.com/downloads/beta/memtest86-iso.zip
+	mkdir -p ../efimemtest/mnt
+	unzip ../efimemtest-zip/memtest86-iso.zip -d ../efimemtest
+	mount ../efimemtest/Memtest86-5.0.0-pro.iso ../efimemtest/mnt -o ro,loop
+	cp ../efimemtest/mnt/efi/boot/bootx64.efi efi/boot/memtest.efi
+	umount ../efimemtest/mnt
+	rm -r ../efimemtest
+fi
+
+
+extra_cleanup
