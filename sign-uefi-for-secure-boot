@@ -20,10 +20,10 @@ if [ -f efi/boot/grml-plus-ca.crt -a ! -f efi/boot/grubx64.efi \
 	-a ! -f ../certs/GrmlPlus.key ]; then
 	# oops, we have a certificate, but no signed grub, and no signing key;
 	# let's delete and re-generate the certificate
-	rm efi/boot/GrmlPlus.crt
+	rm efi/boot/grml-plus-ca.crt
 fi
 
-if [ ! -f efi/boot/GrmlPlus.crt ]; then
+if [ ! -f efi/boot/grml-plus-ca.crt ]; then
 	wget -P .. -nc https://raw.github.com/vathpela/pesign/master/src/certs/make-certs
 	mkdir -p ../certs
 	pushd ../certs
