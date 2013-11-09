@@ -19,5 +19,6 @@ if [ ! -f grml-plus/grub/chntpw.cgz ]; then
 	umount ../chntpw-mnt
 fi
 cat $DATADIR/chntpw.cfg >>grml-plus/grub/extras.cfg
+cp $DATADIR/run-chntpw.sh grml-plus/run-chntpw.sh
 
 extra_cleanup
