@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+if [ ! -f grml-plus/grub/netbootme.lkrn ]; then
+	echo "Adding netboot.me"
+	wget -P .. -nc http://static.netboot.me/gpxe/netbootme.iso
+	mkdir -p ../netbootme
+	mount ../netbootme.iso ../netbootme -o ro,loop
+	cp ../netbootme/gpxe.krn grml-plus/grub/netbootme.lkrn
+	umount ../netbootme
+fi
+cat $DATADIR/netbootme.cfg >>grml-plus/grub/extras.cfg
+
+extra_cleanup
