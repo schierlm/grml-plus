@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+UBCD_FOUND=
+mkdir -p ../ubcdmnt
+
+for iso in grml-plus/ubcd*.iso; do
+	UBCD_FOUND=$iso
+	mount $iso ../ubcdmnt -o ro,loop
+	UBCDNAME=`cat ../ubcdmnt/ubcd/menus/syslinux/defaults.cfg | \
+		grep "^MENU TITLE" | sed 's#MENU TITLE \(.*\) http://.*#\1#' \
+		| sed 's/ *$//'`
+	ISOFILE=`basename $iso`
+	CONFDIR=grml-plus/grub/${ISOFILE%.iso}
+	echo "Adding $UBCDNAME..."
+	if [ ! -d $CONFDIR ]; then
+		mkdir $CONFDIR
+		perl $DATADIR/generate-ubcd-menu.pl ../ubcdmnt $CONFDIR
+	fi
+	umount ../ubcdmnt
+	cat <<EOF >>grml-plus/grub/extras.cfg
+
+menuentry "$UBCDNAME" {
+	loopback ubcd \$images/${ISOFILE}
+	configfile \$images/grub/${ISOFILE%.iso}/ubcd.cfg
+	loopback -d ubcd
+}
+
+EOF
+done
+
+if [ -z "$UBCD_FOUND" ]; then
+	echo "grml-plus/ubcd*.iso not found."
+fi
+
+extra_cleanup
