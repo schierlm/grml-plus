@@ -62,7 +62,7 @@ else
 	echo "Patching GRUB2 MBR for enhanced compatibility."
 	perl $DATADIR/patch-grub-mbr.pl $MBR
 	echo "GRUB2 installation to MBR finished."
-	cp /usr/lib/grub/i386-pc/{bitmap,bitmap_scale,boot,bufio,crypto,extcmd,font,fshelp,gfxterm,iso9660,loopback,normal,terminal,video,test}.mod grml-plus/grub
+	cp /usr/lib/grub/i386-pc/{bitmap,bitmap_scale,boot,bufio,crypto,extcmd,font,fshelp,gfxterm,gzio,iso9660,loopback,normal,terminal,video,test}.mod grml-plus/grub
 fi
 
 if [ ! -f grml-plus/kon-boot.img.gz ]; then
