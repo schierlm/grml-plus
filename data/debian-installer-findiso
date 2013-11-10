@@ -1,0 +1,38 @@
+#!/bin/sh
+
+set -e
+
+mkdir /loop 2>/dev/null || true
+mkdir /cdrom 2>/dev/null || true
+
+insmod /lib/modules/`uname -r`/kernel/drivers/block/loop.ko
+
+for arg in $(cat /proc/cmdline); do
+	case $arg in
+	findiso=*)
+		FINDISO=/loop/${arg#findiso=/}
+		;;
+	esac
+done
+
+echo Locating and loop-mounting ISO file...
+sleep 5
+
+umount /loop 2>/dev/null || true
+
+for fs in "usb-partition" "partition"; do
+	devices="$(list-devices $fs)"
+	for loopdev in $devices; do
+		LOOPFS=$(/sbin/blkid -s TYPE -o value $loopdev 2>/dev/null)
+		if mount -o ro,exec -t $LOOPFS $loopdev /loop; then
+			if [ -f $FINDISO ] && mount -o loop,ro,exec -t iso9660 $FINDISO /cdrom; then
+				if [ -e /cdrom/.disk/info ]; then
+					break 2
+				fi
+				umount /cdrom 2>/dev/null || true
+			fi
+			umount /loop
+		fi
+	done
+done
+echo ISO file mounted.

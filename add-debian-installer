@@ -1,0 +1,87 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+DEBIAN_FOUND=
+mkdir -p ../debmnt
+
+for iso in grml-plus/debian-*.iso; do
+	DEBIAN_FOUND=$iso
+	mount $iso ../debmnt -o ro,loop
+	ISOFILE=`basename $iso`
+	if [ -f ../debmnt/.disk/info ]; then
+		DEBNAME=`cat ../debmnt/.disk/info`
+	else
+		DEBNAME=${ISOFILE%.iso}
+	fi
+	echo "Adding $DEBNAME..."
+	DEBNAME_QUOTED=`echo $DEBNAME | sed 's/"/\\\"/g'`
+	DEBIAN_ARCH=
+	for candidate in 386 amd; do
+		test -f ../debmnt/install.${candidate}/vmlinuz && \
+			DEBIAN_ARCH=${candidate}
+	done
+	if [ -f ../debmnt/linux ]; then
+		DEBIAN_VMLINUZ=/linux
+		DEBIAN_INITRD=/initrd.gz
+		DEBIAN_GTK_INITRD=
+	elif [ -z "${DEBIAN_ARCH}" ]; then
+		echo "Warning: Could not determine architecture for $ISOFILE"
+		continue
+	else
+		DEBIAN_VMLINUZ="/install.${DEBIAN_ARCH}/vmlinuz findiso=/grml-plus/$ISOFILE"
+		DEBIAN_INITRD=/install.${DEBIAN_ARCH}/initrd.gz
+		DEBIAN_GTK_INITRD=/install.${DEBIAN_ARCH}/gtk/initrd.gz
+		for initrd in $DEBIAN_INITRD $DEBIAN_GTK_INITRD; do
+			INITRD_OUT=grml-plus/grub/${ISOFILE%.iso}/initrd.gz
+			if [ "$initrd" = "$DEBIAN_GTK_INITRD" ]; then
+				INITRD_OUT=grml-plus/grub/${ISOFILE%.iso}/gtkinitrd.gz
+			fi
+			if [ ! -f $INITRD_OUT ]; then
+				echo "Building $INITRD_OUT"
+				mkdir -p grml-plus/grub/${ISOFILE%.iso}
+				mkdir ../debinit ../debloop
+				for mod in ../debmnt/pool/main/l/linux/loop-modules-*.udeb; do
+					dpkg -x $mod ../debloop
+				done
+				pushd ../debinit
+				zcat ../debmnt$initrd | cpio -i
+				# only copy modules for matching kernels
+				for dest in lib/modules/*; do
+					cp -r ../debloop/$dest/* $dest
+				done
+				cp $DATADIR/debian-installer-findiso lib/debian-installer-startup.d/S99findiso
+				chmod a+x lib/debian-installer-startup.d/S99findiso
+				find . | cpio -o -H newc | gzip -9 \
+					>../mnt/$INITRD_OUT
+				popd
+				rm -R ../debinit ../debloop
+			fi
+		done
+		DEBIAN_INITRD=\$cfgprefix/${ISOFILE%.iso}/initrd.gz
+		DEBIAN_GTK_INITRD=\$cfgprefix/${ISOFILE%.iso}/gtkinitrd.gz
+	fi
+	umount ../debmnt
+	cat <<EOF >>grml-plus/grub/extras.cfg
+
+menuentry "$DEBNAME_QUOTED" {
+	set DEBIAN_VMLINUZ="${DEBIAN_VMLINUZ}"
+	set DEBIAN_INITRD="${DEBIAN_INITRD}"
+	set DEBIAN_GTK_INITRD="${DEBIAN_GTK_INITRD}"
+	export DEBIAN_VMLINUZ DEBIAN_INITRD DEBIAN_GTK_INITRD
+	loopback deb \$images/$ISOFILE
+	set root=(deb)
+	configfile \$cfgprefix/debian-installer.cfg
+	loopback -d deb
+}
+EOF
+done
+
+if [ -z "$DEBIAN_FOUND" ]; then
+	echo "grml-plus/debian-*.iso not found."
+fi
+
+cp $DATADIR/debian-installer.cfg grml-plus/grub
+cp $DATADIR/run-debian-installer.sh grml-plus
+
+extra_cleanup
