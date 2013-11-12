@@ -3,8 +3,8 @@
 set -e
 
 if [ ! -f "$1" ]; then
-	echo "Usage: ./run-debian-installer debian-isofile.iso"
-	exit -1
+	echo "Usage: ./run-debian-installer debian-isofile.iso" >&2
+	exit 1
 fi
 
 mkdir -p /tmp/debinst/cdrom

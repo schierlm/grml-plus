@@ -5,15 +5,15 @@ set -e
 mkdir -p efi/boot
 
 if [ ! -f efi/boot/bootx64.efi ]; then
-	echo "Error: Please run ./add-uefi-support first!"
+	echo "Error: Please run ./add-uefi-support first!" >&2
 	extra_cleanup
-	exit -1
+	exit 1
 fi
 
 if [ "`dpkg --print-architecture`" != "amd64" ]; then
-	echo "Error: sbsigntools are only available for grml64!"
+	echo "Error: sbsigntools are only available for grml64!" >&2
 	extra_cleanup
-	exit -1
+	exit 1
 fi
 
 if [ -f efi/boot/grml-plus-ca.crt -a ! -f efi/boot/grubx64.efi \
