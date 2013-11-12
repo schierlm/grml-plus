@@ -8,26 +8,26 @@ echo "============================="
 set -e
 
 if [ -z "$1" ]; then
-	echo "Usage: ./make-grml-plus [device]"
-	exit -1
+	echo "Usage: ./make-grml-plus [device]" >&2
+	exit 1
 fi
 
 DEVICE=$1
 MBR=`echo $1 | sed 's/[0-9]//g'`
 
 if [ ! -b $DEVICE -o ! -b $MBR ]; then
-	echo "Error: Either $DEVICE or $MBR is not a valid block device."
-	exit -1
+	echo "Error: Either $DEVICE or $MBR is not a valid block device." >&2
+	exit 1
 fi
 
 if [ ! "`grub-probe -d $DEVICE -t fs`" == "fat" ]; then
-	echo "Error: $DEVICE is not formatted with the fat filesystem."
-	exit -1
+	echo "Error: $DEVICE is not formatted with the fat filesystem." >&2
+	exit 1
 fi
 
 if [ ! "`grub-probe -d $DEVICE -t partmap`" == "msdos" ]; then
-	echo "Error: $MBR does not contain a MBR style partition table."
-	exit -1
+	echo "Error: $MBR does not contain a MBR style partition table." >&2
+	exit 1
 fi
 
 echo "Mounting $DEVICE to /tmp/grml-plus/mnt."

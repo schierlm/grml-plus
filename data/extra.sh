@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 if [ ! -f /tmp/grml-plus/devicename ]; then
-	echo "run make-grml-plus first!"
-	exit -1
+	echo "run make-grml-plus first!" >&2
+	exit 1
 fi
 . /tmp/grml-plus/devicename
 echo "Mounting $DEVICE to /tmp/grml-plus/mnt."
