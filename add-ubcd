@@ -23,6 +23,8 @@ for iso in grml-plus/ubcd*.iso; do
 
 menuentry "$UBCDNAME" {
 	loopback ubcd \$images/${ISOFILE}
+	set iso_path="/$iso"
+	export iso_path
 	configfile \$images/grub/${ISOFILE%.iso}/ubcd.cfg
 	loopback -d ubcd
 }
