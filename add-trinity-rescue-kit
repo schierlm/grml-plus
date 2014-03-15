@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+TRK_FOUND=
+mkdir -p ../trkmnt
+
+for iso in grml-plus/trinity-rescue-kit*.iso; do
+	TRK_FOUND=$iso
+	mount $iso ../trkmnt -o ro,loop
+	ISOFILE=`basename $iso`
+	TRKNAME=`grep "^menu label  Run" ../trkmnt/isolinux.cfg | sed 's/.*\^\(.*\)(.*/\1/'`
+	echo "Adding $TRKNAME..."
+	INITRD_OUT=grml-plus/grub/${ISOFILE%.iso}/initrd.gz
+
+	if [ ! -f $INITRD_OUT ]; then
+		echo "Building $INITRD_OUT"
+		mkdir -p grml-plus/grub/${ISOFILE%.iso}
+		mkdir ../trkinit
+		zcat ../trkmnt/initrd.trk >../trkinitrd || true
+		mount ../trkinitrd ../trkinit -o loop
+		patch -d ../trkinit -p0 <$DATADIR/trk-mountcd.patch
+		umount ../trkinit
+		gzip -c --best ../trkinitrd >$INITRD_OUT
+		rm -R ../trkinit ../trkinitrd
+	fi
+
+	TRK_INITRD=\$cfgprefix/${ISOFILE%.iso}/initrd.gz
+	umount ../trkmnt
+	cat <<EOF >>grml-plus/grub/extras.cfg
+
+menuentry "$TRKNAME" {
+	set iso_path="/$iso"
+	set TRK_INITRD="${TRK_INITRD}"
+	export iso_path TRK_INITRD
+	loopback trk \$images/$ISOFILE
+	set root=(trk)
+	configfile \$cfgprefix/trinity-rescue-kit.cfg
+	loopback -d trk
+}
+EOF
+done
+
+if [ -z "$TRK_FOUND" ]; then
+	echo "grml-plus/trinity-rescue-kit*.iso not found."
+fi
+
+cp $DATADIR/trinity-rescue-kit.cfg grml-plus/grub
+
+extra_cleanup

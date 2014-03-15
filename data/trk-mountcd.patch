@@ -1,0 +1,32 @@
+--- etc/mountcd.sh	2014-03-15 13:16:58.000000000 +0000
++++ etc/mountcd.sh	2014-03-15 13:33:21.000000000 +0000
+@@ -7,6 +7,21 @@
+ TRKMOUNTDIR=`cat /etc/trkmountdir`
+ 
+ function SearchCd {
++# Check for findiso first
++FINDISO=`cat /proc/cmdline | tr " " "\n" | grep -i findiso | cut -d "=" -f 2`
++if [ -n $FINDISO ]; then
++	mkdir /trkmedium
++	for DEV in `blkid -t TYPE=vfat -o device`; do
++		mount -r -t vfat $DEV /trkmedium
++		if [ -f "/trkmedium/$FINDISO" ]; then
++			LOOPDEV=`losetup -f`
++			losetup $LOOPDEV "/trkmedium/$FINDISO"
++			echo ${LOOPDEV#/dev/} > /etc/trkcd
++			break
++		fi
++		umount /trkmedium
++	done
++else
+ # All other things we can check if we 're not running from PXE
+ # Check cd-rom drives in /proc/sys/dev/cdrom/info
+ TRKLABEL=`cat /proc/cmdline | tr " " "\n" | grep -i vollabel | cut -d "=" -f 2`
+@@ -17,6 +32,7 @@
+ cddrives=`grep name /proc/sys/dev/cdrom/info| sed -e s'/drive name://'`
+ for j in $cddrives; do if [ "$TRKLABEL"  == "`dd if=/dev/$j bs=1 skip=32808 count=16  2>/dev/null| tr -d " "`" ]; then echo $j > /etc/trkcd; fi;  
+ done;
++fi
+ # Check if TRK was found on CD, otherwise look on writable storage
+ if [ -s /etc/trkcd ]; then
+ c=`cat /etc/trkcd`
