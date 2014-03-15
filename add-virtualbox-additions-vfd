@@ -1,0 +1,32 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+EDITION=`cat /etc/grml_version | sed 's/-.*//'`
+
+if [ ! -f grml-plus/$EDITION-virtualbox-additions.vfd ]; then
+	echo "Adding $EDITION VirtualBox Additions VFD."
+	apt-get update
+	apt-get -y install linux-headers-3.10-1-grml-all virtualbox-guest-utils virtualbox-guest-dkms
+	dd if=/dev/zero of=../vfd bs=10K count=144
+	mkfs.vfat ../vfd
+	mkdir ../vfdloop
+	mount ../vfd ../vfdloop -o loop
+	cp /var/cache/apt/archives/virtualbox-guest-utils*.deb ../vfdloop
+	cp /lib/modules/`uname -r`/updates/dkms/*.ko ../vfdloop
+	cat <<'EOF' >../vfdloop/vboxload.sh
+#!/bin/sh
+set -e
+chdir `dirname $0`
+modprobe drm
+insmod vboxguest.ko
+insmod vboxsf.ko
+insmod vboxvideo.ko
+dpkg -i *.deb
+EOF
+	umount ../vfdloop
+	rmdir ../vfdloop
+	mv ../vfd grml-plus/$EDITION-virtualbox-additions.vfd
+fi
+
+extra_cleanup
