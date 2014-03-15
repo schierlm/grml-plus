@@ -147,6 +147,7 @@ else
 		>grml-plus/grub/grub.cfg
 fi
 cp $DATADIR/{grml,extras}.cfg grml-plus/grub
+cp $DATADIR/grml-*.sh grml-plus
 
 echo "Cleaning up."
 cd $DATADIR/..
