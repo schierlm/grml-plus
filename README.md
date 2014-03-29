@@ -31,7 +31,7 @@ Design principles
 Installation
 ------------
 
-grml-plus is designed to be run from within `grml 2013.09`. I use VirtualBox with USB support, but
+grml-plus is designed to be run from within `grml 2014.03`. I use VirtualBox with USB support, but
 other virtualization software (or even running it on bare metal) should work as well. Theoretically,
 it should also be possible to run it on any other Linux distribution, but that use case is not
 supported by me. You should run is as `root` though, as it does quite some mounting and unmounting of
@@ -43,7 +43,7 @@ partition should be 0x0B for maximum compatibility, and the partition should be 
 hide the USB key in the boot device menu if it is formatted with a PC (MBR) partition table but there
 are no bootable partitions on it).
 
-Create a directory called `grml-plus` on it and drop any grml 2013.09 ISO file in it (I use grml96-full,
+Create a directory called `grml-plus` on it and drop any grml 2014.03 ISO file in it (I use grml96-full,
 but any other one should work too). In case you like to add some Ubuntu live ISOs, drop them into that
 directory as well.
 

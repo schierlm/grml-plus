@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "grml-plus installation script"
-echo "(c) 2013 Michael Schierl"
+echo "(c) 2013-2014 Michael Schierl"
 echo "Licensed under GPLv2 or later"
 echo "============================="
 
@@ -25,7 +25,7 @@ if [ ! "`grub-probe -d $DEVICE -t fs`" == "fat" ]; then
 	exit 1
 fi
 
-if [ ! "`grub-probe -d $DEVICE -t partmap`" == "msdos" ]; then
+if [ ! "`grub-probe -d $DEVICE -t partmap`" == "msdos " ]; then
 	echo "Error: $MBR does not contain a MBR style partition table." >&2
 	exit 1
 fi
@@ -40,9 +40,9 @@ cd `dirname $0`/data
 DATADIR=`pwd`
 cd /tmp/grml-plus/mnt
 
-mkdir -p grml-plus/grub
+mkdir -p grml-plus/grub/i386-pc
 
-if [ -f grml-plus/grub/loopback.mod ]; then
+if [ -f grml-plus/grub/i386-pc/loopback.mod ]; then
 	echo "loopback.mod found; assuming that Grub2 is already installed."
 	echo "Remove that file to re-install Grub2 in MBR."
 else
@@ -57,12 +57,12 @@ else
 	echo "GRUB device used: $GRUBDEV"
 	grub-mkimage -d /usr/lib/grub/i386-pc -O i386-pc -o ../core.img \
 		-p ${GRUBDEV}/grml-plus/grub biosdisk fat part_msdos
-	grub-setup -d . -m ../device.map -c ../core.img \
+	grub-bios-setup -d . -m ../device.map -c ../core.img \
 		-b ../../../usr/lib/grub/i386-pc/boot.img $MBR
 	echo "Patching GRUB2 MBR for enhanced compatibility."
 	perl $DATADIR/patch-grub-mbr.pl $MBR
 	echo "GRUB2 installation to MBR finished."
-	cp /usr/lib/grub/i386-pc/{bitmap,bitmap_scale,boot,bufio,crypto,extcmd,font,fshelp,gfxterm,gzio,iso9660,loopback,normal,terminal,video,test}.mod grml-plus/grub
+	cp /usr/lib/grub/i386-pc/{bitmap,bitmap_scale,boot,bufio,crypto,extcmd,font,fshelp,gfxterm,gzio,iso9660,loopback,normal,terminal,video,test,gettext}.mod grml-plus/grub/i386-pc
 fi
 
 if [ ! -f grml-plus/kon-boot.img.gz ]; then
@@ -146,7 +146,7 @@ else
 	sed "s/%GRML_ISO%/${GRML_ISO}/g" <$DATADIR/grub.cfg \
 		>grml-plus/grub/grub.cfg
 fi
-cp $DATADIR/{grml,extras}.cfg grml-plus/grub
+cp $DATADIR/extras.cfg grml-plus/grub
 cp $DATADIR/grml-*.sh grml-plus
 
 echo "Cleaning up."

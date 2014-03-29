@@ -32,7 +32,7 @@ sub patch {
 }
 
 patch(1, "\xEB\x63\x90", "\x90\xEB\x62");
-seek(DEV, 792, 1);
+seek(DEV, 816, 1);
 patch(2, "loading", "USB MBR");
 close(DEV);
 

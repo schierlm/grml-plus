@@ -6,20 +6,18 @@ mkdir -p efi/boot
 
 if [ ! -f efi/boot/bootx64.efi ]; then
 	UUID=`grub-probe -d $DEVICE -t fs_uuid`
+	GRML_ISO=
+	for i in grml-plus/grml*.iso; do GRML_ISO=`basename $i`; done
 	echo "search.fs_uuid $UUID root" >../load.cfg
-	echo 'loopback efimods ($root)/efi/boot/grub-modules.tar' >>../load.cfg
-	echo "set prefix=(efimods)/mods" >>../load.cfg
-	mkdir ../mods
-	cp /usr/lib/grub/x86_64-efi/*.mod ../mods
-	cp /usr/lib/grub/x86_64-efi/*.lst ../mods
-	echo 'set EFI=1' >../mods/grub.cfg
-	echo 'export EFI' >>../mods/grub.cfg
-	echo 'configfile ($root)/grml-plus/grub/grub.cfg' >>../mods/grub.cfg
-	tar Ccf .. efi/boot/grub-modules.tar mods
-	rm -r ../mods
+	echo "loopback grml (\$root)/grml-plus/$GRML_ISO" >>../load.cfg
+	echo "set prefix=(grml)/boot/grub" >>../load.cfg
+	echo "insmod normal" >>../load.cfg
+	echo 'set EFI=1' >>../load.cfg
+	echo 'export EFI' >>../load.cfg
+	echo 'set prefix=($root)/grml-plus/grub' >>../load.cfg
 	grub-mkimage -c ../load.cfg -d /usr/lib/grub/x86_64-efi -O x86_64-efi \
 		--output=efi/boot/bootx64.efi --prefix=/ \
-		fat tar part_msdos loopback search_fs_uuid
+		fat iso9660 part_msdos loopback test all_video search_fs_uuid
 fi
 
 if [ ! -f efi/boot/efi-shell.efi ]; then
