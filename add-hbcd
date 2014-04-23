@@ -1,0 +1,90 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+addprogram() {
+	CMDFILE=$1
+	shift
+	echo '@pushd "%~dp0"' >../script
+	echo -n '@7z.exe x -o"%TEMP%\HBCDFiles" -y ..\..\grml-plus\'>>../script
+	echo -n "Hiren's.BootCD.15.2.iso HBCD\\Programs\\$CMDFILE " >>../script
+	for FILE in "$@"; do
+		echo -n "HBCD\\Programs\\$FILE " >>../script
+	done
+	echo "" >>../script
+	echo '@copy 7z.* "%TEMP%\HBCDFiles\HBCD\Programs"' >>../script
+	echo '@"%TEMP%\HBCDFiles\HBCD\Programs\'$CMDFILE'"' >>../script
+	unix2dos ../script 2>/dev/null
+	cp ../script HBCD/Programs/$CMDFILE
+}
+
+autoaddprogram() {
+	CMDFILE=$1
+	DEPS=
+	for FILE in $(grep '7z\.exe .* Files\\' $CMDFILE | \
+	  sed 's/.*Files\\/Files\\/;s/[\r& ].*//'); do
+		DEPS="$DEPS $FILE"
+	done
+	addprogram `basename $CMDFILE` $DEPS
+}
+
+if [ -f grml-plus/Hiren\'s.BootCD.15.2.iso ]; then
+
+	if [ ! -d HBCD ]; then
+		echo "Building /HBCD directory"
+		mkdir -p ../hbcdmnt
+		mount grml-plus/Hiren\'s.BootCD.15.2.iso ../hbcdmnt -o ro,loop,norock
+		mkdir -p HBCD/Dos HBCD/XP HBCD/Programs/Files
+		cp ../hbcdmnt/HBCD/HBCDMenu.exe HBCD
+		cp ../hbcdmnt/HBCD/Dos/* HBCD/Dos
+		cp ../hbcdmnt/HBCD/XP/{X,XP.wim,XPCustomize.cmd} HBCD/XP
+		cp ../hbcdmnt/HBCD/Programs/Files/DLL.7z HBCD/Programs/Files
+		for FILE in EasyUHA.exe HBCDCustomizer.exe IBProcMan.exe \
+		  KillBox.exe R-Kill.com Splitter.exe 7z.exe 7z.dll \
+		  StartupMonitor.exe HBCDMenu.csv; do
+			cp ../hbcdmnt/HBCD/Programs/$FILE HBCD/Programs
+		done
+		echo '@echo This commercial application is not included in the package' >../notinc
+		echo '@pause>nul' >> ../notinc
+		unix2dos ../notinc 2>/dev/null
+		for FILE in SpywareBlaster.cmd ERDComputerManagement.cmd \
+		  AcronisDiskDirector.cmd ERDExplorer.cmd GetDataFAT.cmd \
+		  GetDataNTFS.cmd Ghost32.cmd GhostExp.cmd Undelete.cmd; do
+			cp ../notinc HBCD/Programs/$FILE
+		done
+		addprogram ComboFix.cmd ComboFix.exe
+		addprogram ERUNT.cmd ComboFix.exe
+		addprogram ProcessExplorer.cmd ProcExp.exe
+		addprogram SnapShot.cmd snapshot.exe
+		addprogram NT6xFastInstaller.cmd \
+			Files\\NT6xFastInstaller.7z Files\\GImageX.7z
+
+		for CMDFILE in ../hbcdmnt/HBCD/Programs/*.cmd; do
+			if [ ! -f HBCD/Programs/`basename $CMDFILE` ]; then
+				if grep -q '7z\.exe .* Files\\' $CMDFILE; then
+					autoaddprogram $CMDFILE
+				else
+					cp $CMDFILE HBCD/Programs
+				fi
+			fi
+		done
+		umount ../hbcdmnt
+	fi
+	cat <<EOF >>grml-plus/grub/extras.cfg
+
+menuentry "Hiren's BootCD 15.2" {
+	set iso_path="/grml-plus/Hiren\'s.BootCD.15.2.iso"
+	set usbroot=\$root
+	export iso_path usbroot
+	loopback hbcd \$images/Hiren\'s.BootCD.15.2.iso
+	set root=(hbcd)
+	configfile \$cfgprefix/hbcd.cfg
+	loopback -d hbcd
+}
+EOF
+	cp $DATADIR/hbcd.cfg grml-plus/grub
+else
+	echo "grml-plus/Hiren_s.BootCD.15.2.iso not found."
+fi
+
+extra_cleanup
