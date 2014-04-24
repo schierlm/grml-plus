@@ -1,0 +1,84 @@
+--- 1/autoiso.cfg_orig	2014-04-24 18:03:24.000000000 +0000
++++ 2/autoiso.cfg	2014-04-24 17:27:14.000000000 +0000
+@@ -1,6 +1,7 @@
+ # Sample GRUB script to autodetect operating systems
+ #
+ # Copyright (C) 2010  Free Software Foundation, Inc.
++# Copyright (C) 2014  Michael Schierl
+ #
+ # GRUB is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -52,13 +53,13 @@
+     loopdev="$3"
+ 
+     result=1
+-    for dir in /boot/grml /boot/grmlsmall /boot/grmlmedium; do
+-	if ! test -f ${dir}/linux26 -a -f ${dir}/initrd.gz; then continue; fi
++    for gdir in /boot/grml /boot/grmlsmall /boot/grmlmedium; do
++	if ! test -f ${gdir}/linux26 -a -f ${gdir}/initrd.gz; then continue; fi
+ 
+ 	echo grml $isopath: yes
+ 	result=0
+ 	menuentry "GRML Linux from ${realdev}${isopath}" \
+-	    "$realdev" "$isopath" "$dir" {
++	    "$realdev" "$isopath" "$gdir" {
+ 	    set device="$2"
+ 	    set isopath="$3"
+ 	    set grmldir="$4"
+@@ -200,10 +201,8 @@
+ }
+ 
+ function scan_isos {
+-    isodirs="$1"
+-
+-    for dev in (*); do
+-	for dir in $isodirs; do
++    for dev in ($root); do
++	for dir in /grml-plus/ISOs; do
+ 	    for file in ${dev}${dir}/*.iso ${dev}${dir}/*.ISO; do
+ 		if ! test -f "$file"; then continue; fi
+ 
+@@ -226,19 +225,35 @@
+ 		set root=$saved_root
+ 		loopback -d loopdev_scan
+ 	    done
++	    for file in ${dev}${dir}/*.bin ${dev}${dir}/*.BIN; do
++		if ! test -f "$file"; then continue; fi
++
++		echo linux16 $file: yes
++		menuentry "Linux16 binary from $file" "$file" {
++			linux16 $2
++		}
++	    done
++	    for file in ${dev}${dir}/*.img ${dev}${dir}/*.IMG; do
++		if ! test -f "$file"; then continue; fi
++
++		echo memdisk $file: yes
++		menuentry "Memdisk image from $file" "$file" {
++			linux16 (grml)/boot/addons/memdisk
++			initrd16 $2
++		}
++	    done
++	    for file in ${dev}${dir}/*.cfg ${dev}${dir}/*.CFG; do
++		if ! test -f "$file"; then continue; fi
++
++		echo configfile $file: yes
++		source $file
++	    done
+ 	done
+     done
+     return 0
+ }
+ 
+-# XXX Remove later
+-insmod serial
+-serial
+-terminal_output --append serial
+-# terminal_input --append serial
+-
+ langcode="$lang"
+ 
+ insmod regexp
+-scan_isos /iso /boot/iso
+-
++scan_isos

@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+if [ ! -f grml-plus/grub/autoiso.cfg ]; then
+	echo "Adding autoiso.cfg"
+	SERVER=http://git.savannah.gnu.org/cgit/grub.git/plain
+	wget -P .. -nc $SERVER/docs/autoiso.cfg
+	wget -P .. -nc $SERVER/docs/osdetect.cfg
+	patch -d .. <$DATADIR/autoiso.patch
+	cp ../autoiso.cfg ../osdetect.cfg grml-plus/grub
+fi
+
+mkdir -p grml-plus/ISOs
+cat <<EOF >>grml-plus/grub/extras.cfg
+menuentry "Auto-detect ISOs in /grml-plus/ISOs/" {
+        configfile \$images/grub/autoiso.cfg
+}
+
+menuentry "Auto-detect operating systems on disk(s)" {
+        configfile \$images/grub/osdetect.cfg
+}
+
+EOF
+
+extra_cleanup
