@@ -79,6 +79,7 @@ menuentry "Hiren's BootCD 15.2" {
 	loopback hbcd \$images/Hiren\'s.BootCD.15.2.iso
 	set root=(hbcd)
 	configfile \$cfgprefix/hbcd.cfg
+	set root=\$orig_root
 	loopback -d hbcd
 }
 EOF

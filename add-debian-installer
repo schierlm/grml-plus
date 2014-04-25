@@ -72,6 +72,7 @@ menuentry "$DEBNAME_QUOTED" {
 	loopback deb \$images/$ISOFILE
 	set root=(deb)
 	configfile \$cfgprefix/debian-installer.cfg
+	set root=\$orig_root
 	loopback -d deb
 }
 EOF

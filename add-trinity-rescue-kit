@@ -36,6 +36,7 @@ menuentry "$TRKNAME" {
 	loopback trk \$images/$ISOFILE
 	set root=(trk)
 	configfile \$cfgprefix/trinity-rescue-kit.cfg
+	set root=\$orig_root
 	loopback -d trk
 }
 EOF

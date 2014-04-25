@@ -21,6 +21,7 @@ menuentry "$UBUNAME_QUOTED" {
 	loopback ubu \$images/$ISOFILE
 	set root=(ubu)
 	configfile (ubu)/boot/grub/loopback.cfg
+	set root=\$orig_root
 	loopback -d ubu
 	terminal_output console
 }
