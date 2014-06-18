@@ -4,7 +4,7 @@ set -e
 
 mkdir -p efi/boot
 
-if [ ! -f efi/boot/bootx64.efi ]; then
+if [ ! -f efi/boot/grub.efi ]; then
 	UUID=`grub-probe -d $DEVICE -t fs_uuid`
 	GRML_ISO=
 	for i in grml-plus/grml*.iso; do GRML_ISO=`basename $i`; done
@@ -16,8 +16,13 @@ if [ ! -f efi/boot/bootx64.efi ]; then
 	echo 'export EFI' >>../load.cfg
 	echo 'set prefix=($root)/grml-plus/grub' >>../load.cfg
 	grub-mkimage -c ../load.cfg -d /usr/lib/grub/x86_64-efi -O x86_64-efi \
-		--output=efi/boot/bootx64.efi --prefix=/ \
+		--output=efi/boot/grub.efi --prefix=/ \
 		fat iso9660 part_msdos loopback test all_video search_fs_uuid
+fi
+
+if [ ! -f efi/boot/bootx64.efi ]; then
+	wget -P .. -nc 'http://github.com/schierlm/grml-plus-uefi-tools/releases/download/v0.1/protector.efi'
+	cp ../protector.efi efi/boot/bootx64.efi
 fi
 
 if [ ! -f efi/boot/efi-shell.efi ]; then
