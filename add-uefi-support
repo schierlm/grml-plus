@@ -26,12 +26,12 @@ if [ ! -f efi/boot/bootx64.efi ]; then
 fi
 
 if [ ! -f efi/boot/efi-shell.efi ]; then
-	wget -P .. -nc 'http://sourceforge.net/p/edk2/code/14385/tree/branches/UDK2010.SR1/EdkShellBinPkg/FullShell/X64/Shell_Full.efi?format=raw'
+	wget -P .. -nc 'http://sourceforge.net/p/edk2/code/15566/tree/branches/UDK2014/EdkShellBinPkg/FullShell/X64/Shell_Full.efi?format=raw'
 	cp '../Shell_Full.efi?format=raw' efi/boot/efi-shell.efi
 fi
 
 if [ ! -f efi/boot/uefi-shell.efi ]; then
-	wget -P .. -nc 'http://sourceforge.net/p/edk2/code/14385/tree/branches/UDK2010.SR1/ShellBinPkg/UefiShell/X64/Shell.efi?format=raw'
+	wget -P .. -nc 'http://sourceforge.net/p/edk2/code/15566/tree/branches/UDK2014/ShellBinPkg/UefiShell/X64/Shell.efi?format=raw'
 	cp '../Shell.efi?format=raw' efi/boot/uefi-shell.efi
 fi
 
