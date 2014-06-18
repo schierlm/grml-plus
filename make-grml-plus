@@ -118,10 +118,10 @@ fi
 
 if [ ! -f grml-plus/grub/memtest86.bin ]; then
 	echo "Adding Memtest86."
-	wget -P .. -nc http://memtest86.com/downloads/memtest86-iso.zip
+	wget -P .. -nc http://memtest86.com/downloads/memtest86-4.3.7-iso.zip
 	mkdir -p ../memtest86/mnt
-	unzip ../memtest86-iso.zip -d ../memtest86
-	mount ../memtest86/Memtest86-*.iso ../memtest86/mnt -o ro,loop
+	unzip ../memtest86-4.3.7-iso.zip -d ../memtest86
+	mount ../memtest86/Memtest86-4.3.7.iso ../memtest86/mnt -o ro,loop
 	cp ../memtest86/mnt/isolinux/memtest grml-plus/grub/memtest86.bin
 	umount ../memtest86/mnt
 	rm -R ../memtest86
