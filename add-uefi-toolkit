@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+mkdir -p efi/tools efi/python/lib
+
+if [ ! -f efi/tools/mkramdisk.efi ]; then
+	wget -P .. -nc 'http://sourceforge.net/projects/efi-toolkit/files/Official%20Releases/EFI_Toolkit_2.0.0.1.zip/download'
+	unzip ../download -d ..
+	cp ../EFI_Toolkit_2.0/binaries/em64t/*.efi efi/tools
+	pushd ../EFI_Toolkit_2.0/cmds/python/Lib
+	zip python24.zip *
+	popd
+	cp ../EFI_Toolkit_2.0/cmds/python/Lib/python24.zip efi/python/lib
+fi
+
+extra_cleanup
