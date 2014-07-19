@@ -10,6 +10,12 @@ if [ ! -f grml-plus/grub/netbootme.lkrn ]; then
 	cp ../netbootme/gpxe.krn grml-plus/grub/netbootme.lkrn
 	umount ../netbootme
 fi
+
+if [ ! -f grml-plus/grub/bfo.lkrn ]; then
+	echo "Adding boot.fedoraproject.org"
+	wget -P grml-plus/grub -nc \
+		http://dl.fedoraproject.org/pub/alt/bfo/bfo.lkrn
+fi
 cat $DATADIR/netbootme.cfg >>grml-plus/grub/extras.cfg
 
 extra_cleanup
