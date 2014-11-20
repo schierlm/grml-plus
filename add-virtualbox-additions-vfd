@@ -7,7 +7,7 @@ EDITION=`cat /etc/grml_version | sed 's/-.*//'`
 if [ ! -f grml-plus/$EDITION-virtualbox-additions.vfd ]; then
 	echo "Adding $EDITION VirtualBox Additions VFD."
 	apt-get update
-	apt-get -y install linux-headers-3.13-1-grml-all virtualbox-guest-utils virtualbox-guest-dkms
+	apt-get -y install linux-headers-3.16.0-1-grml-all virtualbox-guest-utils virtualbox-guest-dkms
 	dd if=/dev/zero of=../vfd bs=10K count=144
 	mkfs.vfat ../vfd
 	mkdir ../vfdloop
