@@ -138,10 +138,14 @@ fi
 
 echo "Updating .cfg files."
 GRML_ISO=
-for i in grml-plus/grml*.iso; do GRML_ISO=`basename $i`; done
+for i in grml-plus/grml*.iso; do test -f $i && GRML_ISO=`basename $i`; done
 if [ -z "$GRML_ISO" ]; then
+	echo
+	echo "***********************************************************"
 	echo "*** WARNING: grml-plus/grml*.iso not found. Your device ***"
-	echo "*** will probably not be bootable! ***"
+	echo "*** will probably not be bootable!                      ***"
+	echo "***********************************************************"
+	echo
 else
 	sed "s/%GRML_ISO%/${GRML_ISO}/g" <$DATADIR/grub.cfg \
 		>grml-plus/grub/grub.cfg
