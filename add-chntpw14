@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+if [ ! -f grml-plus/chntpw14.iso ]; then
+	echo "Adding chntpw-140201."
+	wget -P .. -nc http://pogostick.net/~pnh/ntpasswd/cd140201.zip
+	unzip ../cd140201.zip -d ../chntpw14
+	cp ../chntpw14/cd140201.iso grml-plus/chntpw14.iso
+fi
+
+cat $DATADIR/chntpw14.cfg >>grml-plus/grub/extras.cfg
+cp $DATADIR/run-chntpw14.sh grml-plus/run-chntpw14.sh
+
+extra_cleanup
