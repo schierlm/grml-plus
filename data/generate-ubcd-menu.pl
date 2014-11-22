@@ -4,6 +4,20 @@ $isodir=$ARGV[0];
 $confdir=$ARGV[1];
 ($grubconfdir=$confdir) =~ s#.*grml-plus/#\$images/#;
 
+sub initrdline {
+	my ($initrd) = @_;
+	if (`file $isodir/$initrd` =~ /gzip compressed/) {
+		my $size = `zcat $isodir/$initrd | wc -c` + 0;
+		if ($size % 512 != 0) {
+			die $initrd . "'s size $size is not 512-byte aligned.";
+		}
+		return "    loopback initrd (ubcd)$initrd\n" .
+		       "    initrd16 (initrd)+" . ($size / 512) . "\n";
+	} else {
+		return "    initrd16 (ubcd)$initrd\n";
+	}
+}
+
 open MAIN, "<", "$isodir/ubcd/menus/syslinux/main.cfg" or die $!;
 open MENU, ">", "$confdir/ubcd.cfg" or die $!;
 open DESC, ">", "$confdir/main.txt" or die $!;
@@ -113,7 +127,7 @@ HEADER
 				}
                 		print MENU "menuentry \"$label\" {\n";
                 		print MENU "    linux16 (grml)/boot/addons/memdisk$cmd\n";
-                		print MENU "    initrd16 (ubcd)$initrd\n";
+				print MENU initrdline($initrd);
                 		print MENU "}\n";
 			} elsif (/^COM32 linux.c32 \/([^ ]+)$/) {
 				$kernel=$1;
@@ -137,7 +151,7 @@ HEADER
 				}
                 		print MENU "menuentry \"$label\" {\n";
                 		print MENU "    linux16 (ubcd)/$kernel$cmd\n";
-                		print MENU "    initrd16 (ubcd)$initrd\n" unless $initrd eq "";
+				print MENU initrdline($initrd) unless $initrd eq "";
                 		print MENU "}\n";
 			} elsif (/^CONFIG \/pmagic\/.*$/) {
 				print MENU "menuentry \"$label (via Parted Magic)\" {\n";
@@ -211,7 +225,7 @@ HEADER
 						}
 								print MENU "menuentry \"$label\" {\n";
 								print MENU "    linux16 (grml)/boot/addons/memdisk$cmd\n";
-								print MENU "    initrd16 (ubcd)$initrd\n";
+								print MENU initrdline($initrd);
 								print MENU "}\n";
 					} elsif (/^COM32 linux.c32 \/([^ ]+)$/) {
 						$kernel=$1;
@@ -235,7 +249,7 @@ HEADER
 						}
 						print MENU "menuentry \"$label\" {\n";
 						print MENU "    linux16 (ubcd)/$kernel$cmd\n";
-						print MENU "    initrd16 (ubcd)$initrd\n" unless $initrd eq "";
+						print MENU initrdline($initrd) unless $initrd eq "";
 						print MENU "}\n";
 					} elsif (/^CONFIG \/pmagic\/.*$/) {
 						print MENU "menuentry \"$label (via Parted Magic)\" {\n";
@@ -276,7 +290,7 @@ HEADER
 		die unless /^APPEND floppy raw c=32 h=16 s=63$/;
 		print MENU "menuentry \"$label\" {\n";
 		print MENU "	linux16 (grml)/boot/addons/memdisk\n";
-		print MENU "	initrd16 (ubcd)$initrd\n";
+		print MENU initrdline($initrd);
 		print MENU "}\n";
 	} else {
 		die "Unexpected line: '$_'\n";
