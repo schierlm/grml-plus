@@ -1,0 +1,85 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+# override this with "biosdisk" to test in a VM without USB support
+USB_MODULES=${USB_MODULES:=uhci ohci ehci}
+
+if [ ! -f grml-plus/grub/usb-loader-core.img ]; then
+	UUID=`grub-probe -d $DEVICE -t fs_uuid`
+	GRML_ISO=
+	for i in grml-plus/grml*.iso; do GRML_ISO=`basename $i`; done
+	echo "echo Core loaded from USB. Press [Return] to boot." >../load.cfg
+	echo "read tmp" >>../load.cfg
+	echo "search.fs_uuid $UUID root" >>../load.cfg
+	echo "loopback grml (\$root)/grml-plus/$GRML_ISO" >>../load.cfg
+	echo "set prefix=(grml)/boot/grub" >>../load.cfg
+	echo "insmod normal" >>../load.cfg
+	echo 'set prefix=($root)/grml-plus/grub' >>../load.cfg
+	grub-mkimage -c ../load.cfg -d /usr/lib/grub/i386-pc -O i386-pc \
+		-o grml-plus/grub/usb-loader-core.img --prefix=/ \
+		at_keyboard usb_keyboard usbms $USB_MODULES fat iso9660 \
+		part_msdos loopback test all_video search_fs_uuid read echo
+fi
+
+if [ ! -f grml-plus/usb-loader-cd.iso ]; then
+	dd if=/dev/zero of=../ul-floppy.img bs=1k count=1440
+	mkfs.vfat ../ul-floppy.img
+	mkdir -p ../ul-floppy
+	mount grml-plus/allinone.img ../ul-floppy -o ro,loop -t msdos
+	cp ../ul-floppy/boot/plpbt.bin ../plpbt.bin
+	umount ../ul-floppy
+	LOOP=`losetup -f`
+	losetup $LOOP ../ul-floppy.img
+	mount $LOOP ../ul-floppy -t vfat
+	mkdir -p ../ul-floppy/boot/grub/i386-pc
+	echo -e "(fd0)\011$LOOP" >../ul-floppy.map
+	grub-mkimage -d /usr/lib/grub/i386-pc -O i386-pc -p '(fd0)/boot/grub' \
+		-o ../ul-floppy/boot/grub/core.img \
+		biosdisk fat part_msdos \
+		at_keyboard usb_keyboard chain parttool drivemap read sleep \
+		configfile linux ntldr ext2 ntfs btrfs xfs legacycfg \
+		normal video search reboot halt linux16 cat minicmd ls \
+		usbms gzio loopback multiboot help configfile nativedisk echo
+	grub-bios-setup -f -a -d ../ul-floppy/boot/grub -m ../ul-floppy.map \
+		-b ../../../../../usr/lib/grub/i386-pc/boot.img $LOOP || true
+	grub-bios-setup -f -a -d ../ul-floppy/boot/grub -m ../ul-floppy.map \
+		-b ../../../../../usr/lib/grub/i386-pc/boot.img $LOOP
+	cp /usr/lib/grub/i386-pc/{command,moddep}.lst \
+		/usr/lib/grub/i386-pc/{pci,cs5536,{u,o,e}hci}.mod \
+		../ul-floppy/boot/grub/i386-pc
+	cp ../plpbt.bin grml-plus/kon-boot.img.gz \
+		/lib/live/mount/medium/boot/addons/{memdisk,ipxe.lkrn} \
+		grml-plus/grub/memtest86{,plus}.bin \
+		../ul-floppy/boot
+	sed '/# END/Q' $DATADIR/usb-loader.cfg >../ul-floppy/boot/grub/grub.cfg
+	umount $LOOP
+	losetup -d $LOOP
+	cp ../ul-floppy.img grml-plus/usb-loader-floppy.img
+	mkdir -p ../ul-iso/boot/grub/i386-pc
+	cp grml-plus/{usb-loader-floppy,allinone}.img ../ul-iso/boot
+	LOADER_CORE="/grml-plus/grub/usb-loader-core.img"
+	echo "search.file $LOADER_CORE root" >../load.cfg
+	echo "multiboot $LOADER_CORE" >>../load.cfg
+	echo "boot" >>../load.cfg
+	grub-mkimage -c ../load.cfg -d /usr/lib/grub/i386-pc -O i386-pc \
+		-o ../ul-iso/boot/usb-loader-multiboot.img --prefix=/ \
+		at_keyboard usb_keyboard usbms $USB_MODULES fat \
+		part_msdos all_video search_fs_file multiboot boot
+	grub-mkimage -d /usr/lib/grub/i386-pc -O i386-pc-eltorito \
+		-p '(cd)/boot/grub' -o ../ul-iso/boot/grub/eltorito.img \
+		biosdisk iso9660
+
+	cp /usr/lib/grub/i386-pc/*.{lst,mod} \
+		../ul-iso/boot/grub/i386-pc
+	cp ../plpbt.bin grml-plus/kon-boot.img.gz \
+		/lib/live/mount/medium/boot/addons/{memdisk,ipxe.lkrn} \
+		grml-plus/grub/memtest86{,plus}.bin \
+		../ul-iso/boot
+	cp $DATADIR/usb-loader.cfg ../ul-iso/boot/grub/grub.cfg
+	genisoimage -l -r -J -b boot/grub/eltorito.img -c boot/boot.cat \
+		-no-emul-boot -boot-info-table \
+		-o grml-plus/usb-loader-cd.iso ../ul-iso
+fi
+
+extra_cleanup
