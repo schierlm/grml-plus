@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+SRC=$(realpath "$1")
+. data/extra.sh
+
+if [ ! -f boot/BCD ]; then
+	echo "Adding Windows 10 Recovery from $SRC"
+	cp -R $SRC/boot $SRC/sources .
+	cp $SRC/bootmgr boot/bootmgr
+	if [ -f $SRC/efi/boot/bootx64.efi ]; then
+		echo "Adding EFI support, too."
+		mkdir -p efi
+		cp -R $SRC/efi/microsoft efi
+		cp $SRC/efi/boot/bootx64.efi efi/microsoft
+	fi
+fi
+
+cat $DATADIR/win10recovery.cfg >>grml-plus/grub/extras.cfg
+if [ -f efi/microsoft/bootx64.efi ]; then
+	cat $DATADIR/win10efi.cfg >>grml-plus/grub/extras.cfg
+fi
+
+extra_cleanup
