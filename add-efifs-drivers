@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+. data/extra.sh
+
+mkdir -p efi/tools/efifs ../efifs
+
+if [ ! -f efi/tools/efifs/README ]; then
+	wget -P ../efifs -r -nd -np -nc 'http://efi.akeo.ie/downloads/efifs-0.8/x86_64/'
+	cp ../efifs/*.efi efi/tools/efifs
+	echo 'Load these files using the "load" command, followed by "map -r".' >> efi/tools/efifs/README
+fi
+
+extra_cleanup
