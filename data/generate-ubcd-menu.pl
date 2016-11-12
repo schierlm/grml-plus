@@ -287,7 +287,7 @@ HEADER
 		$initrd=$1;
 		$_=<MAIN>;
 		s/\r?\n$//;
-		die unless /^APPEND floppy raw c=32 h=16 s=63$/;
+		die unless /^(APPEND floppy raw c=32 h=16 s=63)?$/;
 		print MENU "menuentry \"$label\" {\n";
 		print MENU "	linux16 (grml)/boot/addons/memdisk\n";
 		print MENU initrdline($initrd);
