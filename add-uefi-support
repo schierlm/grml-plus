@@ -40,7 +40,7 @@ if [ ! -f efi/boot/memtest.efi ]; then
 		http://www.memtest86.com/downloads/memtest86-iso.zip
 	mkdir -p ../efimemtest/mnt
 	unzip ../memtest86-iso.zip -d ../efimemtest
-	mount ../efimemtest/Memtest86-6.*.iso ../efimemtest/mnt -o ro,loop
+	mount ../efimemtest/Memtest86-*.iso ../efimemtest/mnt -o ro,loop
 	cp ../efimemtest/mnt/efi/boot/bootx64.efi efi/boot/memtest.efi
 	umount ../efimemtest/mnt
 	rm -r ../efimemtest
