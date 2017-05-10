@@ -112,8 +112,22 @@ fi
 
 if [ ! -f grml-plus/hdt.img ]; then
 	echo "Adding HDT."
-	wget -P .. -nc http://www.hdt-project.org/raw-attachment/wiki/hdt-0.5.0/hdt-0.5.2.img
-	cp ../hdt-0.5.2.img grml-plus/hdt.img
+	wget -P .. -nc https://www.kernel.org/pub/linux/utils/boot/syslinux/6.xx/syslinux-6.03.zip
+	unzip ../syslinux-6.03.zip -d ../syslinux
+	cd ../syslinux/com32/hdt
+	cp ../../bios/com32/hdt/hdt.c32 .
+	cp ../../bios/mtools/syslinux ../../mtools
+	cp ../../bios/com32/menu/menu.c32 ../menu
+	cp ../../bios/com32/chain/chain.c32 ../chain
+	sed -i 's/hdt.elf.*//;s/.*LDFLAGS.*//' Makefile
+	cp /lib/live/mount/medium/boot/addons/pci.ids floppy
+	gzip --best floppy/pci.ids
+	topdir=../.. MAKEDIR=../../mk make hdt.img
+	for i in ../../bios/com32/*/lib*.c32 ../../bios/com32/*/*/lib*.c32; do
+		MTOOLSRC=floppy/mtools.conf mcopy $i a:
+	done
+	cd ../../../mnt
+	cp ../syslinux/com32/hdt/hdt.img grml-plus/hdt.img
 fi
 
 if [ ! -f grml-plus/grub/memtest86.bin ]; then
