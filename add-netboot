@@ -2,12 +2,6 @@
 set -e
 . data/extra.sh
 
-if [ ! -f grml-plus/grub/netboot.xyz.lkrn ]; then
-	echo "Adding netboot.xyz"
-	wget -P .. -nc https://boot.netboot.xyz/ipxe/netboot.xyz.lkrn
-	cp ../netboot.xyz.lkrn grml-plus/grub/netboot.xyz.lkrn
-fi
-
 if [ ! -f grml-plus/grub/bfo.lkrn ]; then
 	echo "Adding boot.fedoraproject.org"
 	wget -P grml-plus/grub -nc \

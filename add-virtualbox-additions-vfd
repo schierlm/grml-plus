@@ -7,7 +7,10 @@ EDITION=`cat /etc/grml_version | sed 's/-.*//'`
 if [ ! -f grml-plus/$EDITION-virtualbox-additions.vfd ]; then
 	echo "Adding $EDITION VirtualBox Additions VFD."
 	apt-get update
-	apt-get -y install linux-headers-3.16.0-1-grml-all virtualbox-guest-utils virtualbox-guest-dkms
+	apt-get -y install linux-headers-4.9.0-1-grml-all
+	grep 'deb .*ing main' /etc/apt/sources.list.d/debian.list | sed 's/testing/unstable/' >/etc/apt/sources.list.d/unstable.list
+	apt-get update
+	apt-get -y install virtualbox-guest-utils virtualbox-guest-dkms
 	dd if=/dev/zero of=../vfd bs=10K count=144
 	mkfs.vfat ../vfd
 	mkdir ../vfdloop
@@ -21,7 +24,6 @@ chdir `dirname $0`
 modprobe drm
 insmod vboxguest.ko
 insmod vboxsf.ko
-insmod vboxvideo.ko
 dpkg -i *.deb
 EOF
 	umount ../vfdloop

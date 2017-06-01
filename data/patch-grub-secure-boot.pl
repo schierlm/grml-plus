@@ -27,9 +27,9 @@ sub patch {
 	}
 }
 
-seek(DEV, 0x9e67, 0);
+seek(DEV, 0xa483, 0);
 patch(1, "SecureBoot", "XecureBoot");
-seek(DEV, 0x9e72, 0);
+seek(DEV, 0xa48e, 0);
 patch(2, "SetupMode", "XetupMode");
 close(DEV);
 

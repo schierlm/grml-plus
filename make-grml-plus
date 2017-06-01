@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "grml-plus installation script"
-echo "(c) 2013-2014 Michael Schierl"
+echo "(c) 2013-2017 Michael Schierl"
 echo "Licensed under GPLv2 or later"
 echo "============================="
 
@@ -110,6 +110,10 @@ if [ ! -f grml-plus/rawwritewin.exe ]; then
 	rm -R ../rawwrite
 fi
 
+if [ "`dpkg --print-architecture`" = "amd64" -a ! -f grml-plus/hdt.img ]; then
+	echo "WARNING: Unable to compile hdt.img"
+	touch grml-plus/hdt.img
+fi
 if [ ! -f grml-plus/hdt.img ]; then
 	echo "Adding HDT."
 	wget -P .. -nc https://www.kernel.org/pub/linux/utils/boot/syslinux/6.xx/syslinux-6.03.zip
