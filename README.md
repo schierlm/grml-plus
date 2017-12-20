@@ -1,3 +1,12 @@
+# NO LONGER MAINTAINED
+
+This repo is no longer maintained. Users are advised to switch to [usb-modboot](https://github.com/schierlm/usb-modboot/) instead.
+It provides all the features in grml-plus, and more.
+
+To make the migration easier, a
+[special module](https://github.com/schierlm/usb-modboot/releases/download/v0.9/module.grml-plus-legacy.zip) is provided which can be used
+to integrate existing grml-plus menus into the usb-modboot menu, as well as boot usb-modboot via grml-plus' USB-Loader media.
+
 grml-plus
 =========
 
